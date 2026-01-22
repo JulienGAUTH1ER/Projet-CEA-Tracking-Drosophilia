@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 '''
+This file is used to store parameters that do not change often, it is not useful to process the videos, as all the parameters 
+are extracted from the data csv files.
 Unlike parameters.py on the raspberry pi, this does not seem to change the experiment folders' names after we run main, hence
 useful_codes.py
 '''
@@ -8,7 +10,7 @@ useful_codes.py
 # stuff you shouldn't change
 cropping_par = [206, 206, 100, 130]
 
-GPIO = {'Red' : 7 }
+GPIO = {'Red' : 7 } # Used by Rasperry Pi
 
 camera_par = {'Res':[[],[550,550],[412,412]], 'Framerate':20}
 tracking_par = {'Tracking_thr':40, 'Dist_thr':10, 'Backgroung_init':{'fps':40,'size_array':1}}
