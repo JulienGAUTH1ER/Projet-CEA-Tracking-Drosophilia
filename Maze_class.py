@@ -7,6 +7,7 @@ Ce code permet :
 - D'extraire la première frame de la vidéo du labyrinthe
 - De calibrer les zones de recherches pour l'algorithme de détection de position
 - De nommer les différentes zones du labyrinthe selon le placement des odeurs
+Pour l'instant toutes les étapes d'initialisation sont faites à la main, elles pourront cependant être automatisées par la suite.
 '''
 
 import cv2
@@ -28,7 +29,7 @@ class Maze():
         if not success:
             raise ValueError("Impossible de lire la vidéo ou d'extraire la première frame.")
         else :
-            # On construit des dictionnaires où on donne un nom à chaque chambre Ex : {'Chambre_1' : [x_1, y_1]}
+            # On construit des dictionnaires où on donne un nom à chaque chambre Ex : {'Chambre_1' : (x_1, y_1)}
             self.chamber_placements = {}
             self.odor_placements = {}
             self.larva_placement = {}
@@ -36,8 +37,6 @@ class Maze():
             
             self.nb_labyrinthes = 0
             self.nb_chambres = 0
-
-
 
 
     def ajouter_clicks(self, event, x, y, flags, indexes):
@@ -56,11 +55,12 @@ class Maze():
         Appuyer sur la touche "echap" permet de recommencer la calibration du labyrinthe
         '''
         # Le code est adaptatif aux différents labyrinthes qui peuvent être développés
+        cv2.namedWindow("Fenetre de calibration", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Fenetre de calibration", 900, 700)
         cv2.imshow("Fenetre de calibration", self.frame_1)
         cv2.waitKey(1)
         self.nb_labyrinthes = int(input("Combien il y a-t-il de labyrinthes ? "))
         self.nb_chambres = int(input("Combien il y a-t-il de chambres par labyrinthe ? "))
-        cv2.destroyAllWindows()
         
         print("Veuillez calibrer les chambres en cliquant sur leur centre dans l'ordre.")
         
@@ -75,7 +75,7 @@ class Maze():
                     cv2.waitKey(1)
                 #print(self.chamber_placements)
                 self.place_odors(lab_index, chamber_index)
-            cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
         return()
     
     def place_odors(self, lab_index, chamber_index):
@@ -84,8 +84,6 @@ class Maze():
         concentration = str(input("Veuillez entrer la concentration choisie : "))
         odor = str(input("Veuillez entrer l'odeur choisie : "))
         self.odor_placements[f'Labyrinthe_{lab_index}'][f'Chambre_{chamber_index}'] = (concentration, odor)
-
-
 
 
 
