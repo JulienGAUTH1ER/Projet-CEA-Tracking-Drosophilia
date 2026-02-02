@@ -6,6 +6,7 @@ Les autres fichiers servent à définir les différentes classes pour réaliser 
 
 import os
 from Maze_class import Maze
+from Gui import MazeGui
 
 # Exemple d'utilisation de la classe Maze
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,5 +21,10 @@ for folder_name in os.listdir(data_dir):
     video_path = os.path.join(folder_path, 'Video', 'Video.avi')
     print(video_path)
     MonLabyrinthe = Maze(video_path)
-    MonLabyrinthe.calibrate_frame()
+    gui = MazeGui(MonLabyrinthe)
+    gui.run()
+    
+    print("Résultat calibration :")
+    print(MonLabyrinthe.chamber_placements)
+    print(MonLabyrinthe.odor_placements)
     #print(f"First frame for {folder_name} extracted successfully.")
