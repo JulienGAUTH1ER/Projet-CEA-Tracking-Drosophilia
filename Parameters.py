@@ -1,7 +1,27 @@
 '''
 Docstring for Parameters
 
-Ce fichier fait le bilan de tous les paramètres qui sont utilisés dans le code
+Ce fichier contient tous les paramètres qui ne sont pas liés à la géométrie du labyrinthe.
+Ils seront à aller chercher dans un fichier .csv par exemple.
 '''
 
-rayon_chambre = 70 # pixels
+NB_LABYRINTHS = 8
+
+ODEURS_CHAMBRES = {
+    "Chambre_1_1": "Eau",
+    "Chambre_1_2": "Acétate d'éthyle",
+    "Chambre_1_3": "Acétate d'éthyle",
+    
+    "Chambre_2_1": "Eau",
+    "Chambre_2_2": "Acétate d'éthyle",
+    "Chambre_2_3": "Acétate d'éthyle"
+}
+CONCENTRATIONS_CHAMBRES = {
+    "Chambre_1_1": 0,
+    "Chambre_1_2": 1,
+    "Chambre_1_3": 2,
+    
+    "Chambre_2_1": 0,
+    "Chambre_2_2": 1,
+    "Chambre_2_3": 2
+}

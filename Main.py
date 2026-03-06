@@ -5,10 +5,12 @@ Les autres fichiers servent à définir les différentes classes pour réaliser 
 '''
 
 import os
-from Maze_class import Maze
-from Gui import MazeGui
+from Calibration.Main_calibration import main_calibration
+from Tracking.Main_tracking import main_tracking
+from pathlib import Path
 
-# Exemple d'utilisation de la classe Maze
+'''
+# Exemple d'utilisation du programme
 base_dir = os.path.dirname(os.path.abspath(__file__))
 print("Base directory:", base_dir)
 # Les vidéos doivent être dans un dossier 'Data' à côté de ce script
@@ -18,13 +20,13 @@ data_dir = os.path.join(base_dir, 'Data')
 # On parcourt toutes les vidéos dans le dossier Data
 for folder_name in os.listdir(data_dir):
     folder_path = os.path.join(data_dir, folder_name)
-    video_path = os.path.join(folder_path, 'Video', 'Video.avi')
+    video_dir = os.path.join(folder_path, 'Video')
+    video_path = os.path.join(folder_path, 'Video', 'Video.mp4')
     print(video_path)
-    MonLabyrinthe = Maze(video_path)
-    gui = MazeGui(MonLabyrinthe)
-    gui.run()
-    
-    print("Résultat calibration :")
-    print(MonLabyrinthe.chamber_placements)
-    print(MonLabyrinthe.odor_placements)
-    #print(f"First frame for {folder_name} extracted successfully.")
+    main_calibration(video_path)
+    main_tracking(video_path)
+'''
+
+video_path = "C:/Users/julie/Downloads/Projet CEA/Rewrite/Data/Experiment_4/Video/Labyrinthe_1_top.mp4"
+print(video_path)
+main_tracking(video_path)
