@@ -1,0 +1,11 @@
+Vous vous trouvez dans le dossier "Calibration".
+Ce dossier regroupe toutes les classes et fonctions qui sont nécessaires à réaliser la calibration
+du labyrinthe.
+
+Models.py regroupe les objets utilisés
+Gui.py contrôle l'interface utilisateur
+Calibration.py contrôle tous les calculs réalisés hors de l'interface utilisateurs
+Geometry.py regroupe toutes les informations spécifiques au labyrinthe (position des chambres, points à 
+considérer pour réaliser la superposition de masques)
+
+Si on souhaite changer de labyrinthe, il faut donc seulement modifier les points d'interêt dans "Geometry.py".
