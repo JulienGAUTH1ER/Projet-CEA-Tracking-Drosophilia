@@ -6,7 +6,7 @@ Cette classe a pour but de faire tous les calculs nécessaires au tracking de la
 import numpy as np
 import cv2
 import json
-from Tracking.Parameters import NB_FRAMES_BACKGROUND, ALPHA_BKG, FPS, MIN_AREA, MAX_AREA, MAX_DISTANCE, LOST_TOLERANCE, THRESHOLD_VALUE, ALPHA, MORPH, GROWING_SEARCH
+from Tracking.Parameters import NB_FRAMES_BACKGROUND, ALPHA_BKG, FPS, MIN_AREA, MAX_AREA, D_SEARCH, LOST_TOLERANCE, THRESHOLD_VALUE, ALPHA, MORPH, GROWING_SEARCH
 
 class Tracking:
     def __init__(self, mask = None):
@@ -17,7 +17,7 @@ class Tracking:
         # Parameters
         self.min_area = MIN_AREA
         self.max_area = MAX_AREA
-        self.max_distance = MAX_DISTANCE
+        self.d_search = D_SEARCH
         self.alpha_contrast = ALPHA
         self.lost_tolerance = LOST_TOLERANCE
         self.background_frames = NB_FRAMES_BACKGROUND
@@ -36,6 +36,7 @@ class Tracking:
         self.frames_lost = 0
         self.distances: list[float] = []
         self.speeds: list[float] = []
+        self.timestamps: list[float] = []
 
         # Metrics
         self.distance = 0.0
@@ -81,6 +82,7 @@ class Tracking:
         
         largest = max(candidate_contours, key=cv2.contourArea)
         area = cv2.contourArea(largest)
+        print(f"Aire = {area}")
         M = cv2.moments(largest)
         if M["m00"] == 0:
             return None
@@ -98,7 +100,7 @@ class Tracking:
             last_detected_position = np.array(self.centroid)
             candidate = np.array([cx, cy])
             distance = np.linalg.norm(candidate - last_detected_position)**2
-            search_radius = int(self.max_distance * (1 + (1/self.search)*self.frames_lost))
+            search_radius = int(self.d_search * (1 + (1/self.search)*self.frames_lost))
             if distance <= search_radius**2 and self.mask_test([cx, cy]):
                 return np.array([cx, cy])
             else:
@@ -121,6 +123,7 @@ class Tracking:
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
             if self.mask_test([cx, cy]):
+                area = cv2.contourArea(c)
                 centroids.append(np.array([cx, cy]))
 
         if self.centroid is None or not centroids:
@@ -135,12 +138,13 @@ class Tracking:
         min_index = np.argmin(distances)
 
         # vérifier la distance max autorisée
-        search_radius = int(self.max_distance * (1 + (1/self.search)* self.frames_lost))
+        search_radius = int(self.d_search * (1 + (1/self.search)* self.frames_lost))
         if distances[min_index] <= search_radius**2:
             return centroids[min_index], candidate_contours
         else:
             return None, candidate_contours
-        
+
+    
     def contrast_larva(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(gray, self.get_background())
@@ -148,7 +152,6 @@ class Tracking:
         diff = cv2.convertScaleAbs(diff, alpha=self.alpha_contrast)
         _, thresh = cv2.threshold(diff, self.threshold_value, self.threshold_value, cv2.THRESH_BINARY)
         return thresh
-    
     
     def tracking_larva(self, diff_frame):
         
@@ -221,7 +224,12 @@ class Tracking:
             np.array(self.centroid) - np.array(self.previous_centroid)
         )
         # vitesse en pixels/seconde
-        self.speed = self.distance * self.fps
+        dt = self.timestamps[-1] - self.timestamps[-2]
+
+        if dt > 0:
+            self.speed = self.distance / dt
+        else:
+            self.speed = 0.0
 
 
     def get_valid_contours(self, contours):
@@ -246,7 +254,7 @@ class Tracking:
             "fps": self.fps,
             "parameters_python": {
                 "min_area": self.min_area,
-                "max_distance": self.max_distance,
+                "d_search": self.d_search,
                 "lost_tolerance": self.lost_tolerance,
                 "threshold_value": self.threshold_value,
                 "alpha_contrast": self.alpha_contrast,
@@ -254,7 +262,7 @@ class Tracking:
             "tracking": [
                 {
                     "frame": i,
-                    "time_sec": i / self.fps,
+                    "time_sec": self.timestamps[i],
                     "position": formatted_trajectory[i],
                     "detected": self.detections[i],
                     "distance_px": self.distances[i],

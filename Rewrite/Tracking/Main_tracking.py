@@ -51,7 +51,10 @@ def main_tracking(video_path, mask_path):
         ret, frame = video.read()
         if not ret:
             break
+        
         pbar.update(1)
+        timestamp = video.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+        tracker.timestamps.append(timestamp)
         
         # Redimmensionnement du masque
         tracker.mask_resize(frame)

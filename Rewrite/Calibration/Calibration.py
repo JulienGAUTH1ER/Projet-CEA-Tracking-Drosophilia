@@ -50,7 +50,7 @@ class ManualCalibration:
 
     def decoupe_Mazes(self, labs, video_path, output):
         '''
-        Docstring for decoupe_labyrinth
+        Docstring for decoupe_Mazes
         
         :param self: Description
         :param clicked_points: Description
@@ -66,16 +66,18 @@ class ManualCalibration:
         # Dimensions de sortie de la vidéo        
         width, height = width_mask, height_mask
         middle = height // 2
+        video = cv2.VideoCapture(video_path)
+        lab_data = []
         
         for lab in labs:
             lab_name = LAB_NAMES[lab.id - 1]
             lab_folder = Path(output) / f"Maze_{lab_name}"
             lab_folder.mkdir(parents=True, exist_ok=True)
+            
+            # Attention, ici les noms sont inversés par construction 
+            output_path_top = lab_folder / f"Maze_{lab_name}_bottom.mp4"
+            output_path_bottom = lab_folder / f"Maze_{lab_name}_top.mp4"
 
-            output_path_top = lab_folder / f"Maze_{lab_name}_top.mp4"
-            output_path_bottom = lab_folder / f"Maze_{lab_name}_bottom.mp4"
-
-            video = cv2.VideoCapture(video_path)
             fps = video.get(cv2.CAP_PROP_FPS)
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             
@@ -90,13 +92,21 @@ class ManualCalibration:
             ], dtype=np.float32)
             
             homography = cv2.getPerspectiveTransform(src_points, zoomed_points)
+            map_x, map_y = cv2.initUndistortRectifyMap(
+                np.eye(3), None, homography, np.eye(3),
+                (width, height), cv2.CV_32FC1
+            )
+
+            lab_data.append((map_x, map_y, writer_top, writer_bottom, lab_folder, lab_name))
+
+                     
+        while True:
+            ret, frame = video.read()
+            if not ret:
+                break
             
-            while True:
-                ret, frame = video.read()
-                if not ret:
-                    break
-                
-                warped = cv2.warpPerspective(frame, homography, (width, height))
+            for map_x, map_y, writer_top, writer_bottom, _, _ in lab_data:
+                warped = cv2.remap(frame, map_x, map_y, cv2.INTER_LINEAR)
                 
                 top_half = warped[:middle, :]
                 bottom_half = warped[middle:, :]
@@ -104,18 +114,20 @@ class ManualCalibration:
                 writer_top.write(top_half)
                 writer_bottom.write(bottom_half)
             
+        video.release()
+
+        for _, _, writer_top, writer_bottom, folder, name in lab_data:
             writer_top.release()
             writer_bottom.release()
-            video.release()
-            
-            (lab_folder / "calibration_done.txt").write_text("done")
-            print(f"Maze {lab_name} découpé dans {output_path_top} et {output_path_bottom}.")
+
+            (folder / "calibration_done.txt").write_text("done")
+            print(f"Maze {name} découpé.")
     
     
     
-    def calibrate_labyrinth(self, lab_id, clicked_points):
+    def calibrate_Maze(self, lab_id, clicked_points):
         '''
-        Docstring for calibrate_labyrinth
+        Docstring for calibrate_Maze
         
         :param lab_id: Identifiant du Maze considéré
         On applique les deux fonctions précédentes et on renvoie les instances de Mazes

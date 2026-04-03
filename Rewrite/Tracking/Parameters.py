@@ -24,13 +24,13 @@ FPS = 6
 
 # Aire du plus petit et plus grand contour détectable
 MIN_AREA = 800
-MAX_AREA = 100000
+MAX_AREA = 5000
 
-# Distance max à laquelle on va aller chercher d'autres centroïdes
-MAX_DISTANCE = 5
+# Distance à laquelle on commence à chercher un centroïde à partir du dernier centroïde détecté
+D_SEARCH = 5
 
 # Nombre de frames pendant lesquelles on va continuer à chercher un centroïde dans les alentours du dernier centroïde détecté
 LOST_TOLERANCE = 150
 
 # Toutes les "GROWING_SEARCH" frames, on augmente la taille du cercle de recherche de 1 pixel
-GROWING_SEARCH = 1
+GROWING_SEARCH = 0.5
