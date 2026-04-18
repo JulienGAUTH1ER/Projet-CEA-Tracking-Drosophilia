@@ -7,12 +7,19 @@ import cv2
 class GuiTracking:
     
     def display_background(self, background):
+        '''
+        Permet d'afficher le background utilisé pour le tracking
+        '''
+        
         cv2.namedWindow("Background", cv2.WINDOW_NORMAL)
         cv2.imshow("Background", background)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     
     def display_frame(self, frame, title="Frame"):
+        '''
+        Permet d'afficher une frame d'étude
+        '''
         cv2.namedWindow(title, cv2.WINDOW_NORMAL)
         cv2.imshow(title, frame)
         cv2.waitKey(1)

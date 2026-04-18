@@ -6,6 +6,7 @@ C'est ce code qu'il faut modifier en cas de changement de géométrie du Maze.
 
 from pathlib import Path
 import cv2
+from tqdm import tqdm
 import numpy as np
 from Calibration.Parameters import width_mask, height_mask, LAB_NAMES
 from Calibration.Models import Maze, Chamber
@@ -23,8 +24,6 @@ class ManualCalibration:
 
     def compute_homography(self, frame_pts):
         '''
-        Docstring for compute_homography
-
         :param mask_pts: Points qui ont été définis sur le masque
         :param frame_pts: Points sur lesquels l'utilisateur a cliqué, correspondant aux mask_pts
         Permet de calculer la matrice d'homographie, permettant de savoir comment agrandir le masque pour
@@ -34,9 +33,7 @@ class ManualCalibration:
         return self.homography
 
     def project_chambers(self, homography):
-        '''
-        Docstring for project_chambers
-        
+        '''        
         Cette fonction permet ensuite de calculer la position du centre des chambres grâce à la matrice d'homographie.
         On créé ensuite des instances de chambres.
         '''
@@ -67,6 +64,10 @@ class ManualCalibration:
         width, height = width_mask, height_mask
         middle = height // 2
         video = cv2.VideoCapture(video_path)
+        
+        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        pbar = tqdm(total=total_frames, desc="Découpe des Mazes")
+        
         lab_data = []
         
         for lab in labs:
@@ -97,24 +98,39 @@ class ManualCalibration:
                 (width, height), cv2.CV_32FC1
             )
 
-            lab_data.append((map_x, map_y, writer_top, writer_bottom, lab_folder, lab_name))
+            map_x_gpu = cv2.cuda_GpuMat()
+            map_y_gpu = cv2.cuda_GpuMat()
+            map_x_gpu.upload(map_x)
+            map_y_gpu.upload(map_y)
+
+            lab_data.append((map_x_gpu, map_y_gpu, writer_top, writer_bottom, lab_folder, lab_name))
+
+        gpu_frame = cv2.cuda_GpuMat()
 
                      
         while True:
             ret, frame = video.read()
+            pbar.update(1)
+            gpu_frame.upload(frame)
             if not ret:
                 break
             
-            for map_x, map_y, writer_top, writer_bottom, _, _ in lab_data:
-                warped = cv2.remap(frame, map_x, map_y, cv2.INTER_LINEAR)
-                
-                top_half = warped[:middle, :]
-                bottom_half = warped[middle:, :]
+        for map_x_gpu, map_y_gpu, writer_top, writer_bottom, _, _ in lab_data:
+    
+            warped_gpu = cv2.cuda.remap(
+                gpu_frame, map_x_gpu, map_y_gpu, interpolation=cv2.INTER_LINEAR
+            )
 
-                writer_top.write(top_half)
-                writer_bottom.write(bottom_half)
+            warped = warped_gpu.download()
+
+            top_half = warped[:middle, :]
+            bottom_half = warped[middle:, :]
+
+            writer_top.write(top_half)
+            writer_bottom.write(bottom_half)
             
         video.release()
+        pbar.close()
 
         for _, _, writer_top, writer_bottom, folder, name in lab_data:
             writer_top.release()
@@ -127,8 +143,6 @@ class ManualCalibration:
     
     def calibrate_Maze(self, lab_id, clicked_points):
         '''
-        Docstring for calibrate_Maze
-        
         :param lab_id: Identifiant du Maze considéré
         On applique les deux fonctions précédentes et on renvoie les instances de Mazes
         '''
@@ -140,6 +154,7 @@ class ManualCalibration:
         chambers = self.project_chambers(self.homography)
         lab.chambers = chambers
         return lab
+    
 
 
 

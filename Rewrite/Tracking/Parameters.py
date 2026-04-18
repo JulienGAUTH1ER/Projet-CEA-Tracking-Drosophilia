@@ -4,7 +4,7 @@ Ce fichier fait état de tous les paramètres qui sont utilisés pour le trackin
 '''
 
 # Nombre de frames qui sont utilisées pour initialiser le background
-NB_FRAMES_BACKGROUND = 10000
+NB_FRAMES_BACKGROUND = 100
 
 # Cette valeur est utilisée pour faire ressortir les différences entre background et image.
 # Elle est à modifier si on change la luminosité de la vidéo.

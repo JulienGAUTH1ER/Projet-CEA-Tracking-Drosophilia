@@ -41,12 +41,7 @@ for experiment_folder in data_dir.iterdir():
     video_dir = experiment_folder / "Video"
     Mazes_path = video_dir / "Mazes"
     for video_lab in Mazes_path.rglob("*.mp4"):
+        if video_lab.name.endswith("_processed.mp4"):
+            continue
         print("Tracking :", video_lab)
         main_tracking(video_lab, mask_dir)
-
-
-'''
-video_path = "C:/Users/julie/Downloads/Projet CEA/Rewrite/Data/Experiment_4/Video/Maze_1_top.mp4"
-print(video_path)
-main_tracking(video_path)
-'''

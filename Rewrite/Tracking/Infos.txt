@@ -22,3 +22,42 @@ par cette fonction :
         cv2.waitKey(1)
 
         return thresh'''
+
+
+Si vous souhaitez afficher l'aire d'une larve pendant le tracking, veuillez rajouter après :            
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
+            if self.mask_test([cx, cy]):
+dans la fonction "find_centroid" de Tracking.py :
+                area = cv2.contourArea(c)
+                print(f"Contour trouvé avec aire = {area}")
+
+
+Si vous souhaitez visualiser le tracking pendant que le code tourne, veuillez rajouter après tracker.update_background(frame) dans "Tracking" :
+
+        frame_with_mask = gui.draw_mask_outline(frame, tracker.mask)
+        
+        frame_display = gui.draw_tracking_overlay(
+            frame_with_mask, # Modifier ici par diff_frame permet de voir les contours détectés ou par frame pour ne pas voir le masque
+            valid_contours,
+            tracker.trajectory
+        )
+        cv2.imshow("Tracking", frame_display)
+
+Voici la version cpu de "initialise_background" :
+
+
+    def initialise_background(self, video):
+        ''' Cette fonction sert à initialiser le background en calculant la médiane de chaque pixel sur N_frames '''
+        print("Initialisation du background en cours...")
+        frames = []
+        for i in range(self.background_frames):
+            print(f"Reading frame {i}/{self.background_frames}" if i % 50 == 0 else "", end="\r")
+            ret, frame = video.read()
+            if not ret:
+                break
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            frames.append(gray)
+        median = np.median(np.stack(frames), axis=0)
+        self.background = median.astype("float32")
+        print('Background initialisé')

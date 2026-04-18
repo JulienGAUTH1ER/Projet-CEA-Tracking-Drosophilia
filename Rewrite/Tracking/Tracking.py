@@ -4,6 +4,7 @@ Cette classe a pour but de faire tous les calculs nécessaires au tracking de la
 '''
 
 import numpy as np
+import cupy as cp
 import cv2
 import json
 from Tracking.Parameters import NB_FRAMES_BACKGROUND, ALPHA_BKG, FPS, MIN_AREA, MAX_AREA, D_SEARCH, LOST_TOLERANCE, THRESHOLD_VALUE, ALPHA, MORPH, GROWING_SEARCH
@@ -46,23 +47,29 @@ class Tracking:
         self.trajectory: list[np.ndarray | None] = []
         self.detections: list[bool] = []
         
-        
+
     def initialise_background(self, video):
         print("Initialisation du background en cours...")
         frames = []
         for i in range(self.background_frames):
-            print(f"Reading frame {i}/{self.background_frames}" if i % 50 == 0 else "", end="\r")
+            if i % 50 == 0:
+                print(f"Reading frame {i}/{self.background_frames}", end="\r")
             ret, frame = video.read()
             if not ret:
                 break
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            frames.append(gray)
-        median = np.median(np.stack(frames), axis=0)
-        self.background = median.astype("float32")
+            gray_gpu = cp.asarray(gray)
+            frames.append(gray_gpu)
+        stack = cp.stack(frames)
+        median = cp.median(stack, axis=0)
+        self.background = cp.asnumpy(median).astype("float32")
         print('Background initialisé')
 
 
     def update_background(self, frame):
+        '''
+        Cette fonction sert à mettre à jour le background en utilisant une moyenne glissante
+        '''
         
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame_to_update = gray_frame.copy()
@@ -75,14 +82,15 @@ class Tracking:
 
     def tracking_initialisation(self, candidate_contours):
         '''
-        Cette fonction sert à détecter le premier plus grand contour
+        Cette fonction sert à détecter le premier plus grand contour, si le tracking échoue,
+        elle vérifie si le plus grand contour est dans la zone de recherche autour du dernier point détecté et dans le masque,
+        sinon elle garde l'ancien point
         '''
         if not candidate_contours:
             return None
         
         largest = max(candidate_contours, key=cv2.contourArea)
         area = cv2.contourArea(largest)
-        print(f"Aire = {area}")
         M = cv2.moments(largest)
         if M["m00"] == 0:
             return None
@@ -96,7 +104,6 @@ class Tracking:
         elif self.centroid is None:
             return(None)
         else :
-            print('Tracking échoué, réinitialisation du tracking')
             last_detected_position = np.array(self.centroid)
             candidate = np.array([cx, cy])
             distance = np.linalg.norm(candidate - last_detected_position)**2
@@ -108,6 +115,12 @@ class Tracking:
         
 
     def find_centroid(self, contours):
+        '''
+        
+        Cette fonction sert à trouver le centroïde du contour le plus proche du dernier point détecté,
+        si aucun contour n'est trouvé, elle retourne None
+        '''
+        
 
         candidate_contours = self.get_valid_contours(contours)
         if not candidate_contours:
@@ -146,6 +159,10 @@ class Tracking:
 
     
     def contrast_larva(self, frame):
+        '''
+        Cette fonction fait les étapes de traitement d'image pour faire ressortir la larve sur le fond
+        '''
+        
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(gray, self.get_background())
         diff = cv2.normalize(diff, None, 0, 255, cv2.NORM_MINMAX)
@@ -154,6 +171,10 @@ class Tracking:
         return thresh
     
     def tracking_larva(self, diff_frame):
+        '''
+        Cette fonction enregistre la position du centroïde de la larve et met à jour les métriques de distance
+        et de vitesse, elle gère aussi les cas où la larve n'est pas détectée
+        '''
         
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (self.morph,self.morph))
         diff_frame = cv2.dilate(diff_frame, kernel, iterations=1)

@@ -17,7 +17,8 @@ MASK_POINTS = np.array([
 width_mask = 888
 height_mask = 1859
 
-# Centres des chambres dans le référentiel du masque
+# Centres des chambres dans le référentiel du masque, ils sont utilisés pour que l'utilisateur puisse mieux
+# voir si la calibration est bonne
 CHAMBERS_MODEL = {
     "Chambre_1_1":  (466, 352), # En haut
     "Chambre_1_2": (273, 684), # Bas gauche
@@ -35,6 +36,7 @@ ROOM_NAMES = ["1", "2", "3"]
 # Valeur en pixels du rayon de la chambre dans le référentiel du masque
 r_mask = 340
 
+# Couleurs utilisées pour afficher les différentes chambres et la zone de décision
 CHAMBERS_COLORS = {
     "Chambre_3": 'Red',      # Rouge
     "Chambre_2": 'Green',      # Vert

@@ -26,6 +26,10 @@ class GuiCalibration:
 
 
     def _mouse_callback(self, event, x, y, flags, param):
+        '''
+        Permet de récupérer les coordonnées des clics de souris sur la fenêtre d'affichage de la calibration.
+        '''
+        
         if event == cv2.EVENT_LBUTTONDOWN and len(self.clicked_points) < 4:
             print(f"Clic: ({x},{y})")
             self.clicked_points.append([x, y])
@@ -34,6 +38,10 @@ class GuiCalibration:
             
 
     def select_Maze(self):
+        '''
+        Permet à l'utilisateur de sélectionner les 4 points d'intérêt du Maze (les 4 coins) en cliquant dessus.
+        '''
+        
         
         self.clicked_points = []
         clone = self.frame_1.copy()
@@ -88,6 +96,10 @@ class GuiCalibration:
         return clone
 
     def validate_calibration(self, frame, chambers, lab_id):
+        '''
+        Permet à l'utilisateur de valider la calibration en affichant les centres des chambres sur la frame du Maze.
+        '''
+        
         annotated = self.draw_chambers(frame, chambers)
 
         cv2.namedWindow(f"Maze {lab_id}", cv2.WINDOW_NORMAL)
